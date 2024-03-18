@@ -1,118 +1,78 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, Image, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const ZoomableImage = ({ source }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const [isZoomed, setIsZoomed] = useState(false);
+  const scrollViewRef = useRef(null);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const toggleZoom = () => {
+    setIsZoomed(!isZoomed);
+    Animated.timing(scale, {
+      toValue: isZoomed ? 1 : 2, // You can adjust the zoom level here
+      duration: 300, // Adjust animation duration as needed
+      useNativeDriver: true,
+    }).start();
+    
+    // Disable scrolling when zoomed in
+    if (!isZoomed && scrollViewRef.current) {
+      scrollViewRef.current.setNativeProps({ scrollEnabled: false });
+    } else if (scrollViewRef.current) {
+      scrollViewRef.current.setNativeProps({ scrollEnabled: true });
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
+    <ScrollView
+      ref={scrollViewRef}
+      contentContainerStyle={styles.scrollViewContent}
+      maximumZoomScale={2} // Allow zooming
+      minimumZoomScale={1}
+      bouncesZoom={true}
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
+    >
+      <TouchableOpacity onPress={toggleZoom} activeOpacity={1}>
+        <Animated.Image
+          source={source}
           style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            width: '100%',
+            height: 300, // Set initial height
+            transform: [{ scale }],
+          }}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    </ScrollView>
   );
-}
+};
+
+const ZoomableScrollView = ({ images }) => {
+  return (
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      {images.map((image, index) => (
+        <ZoomableImage key={index} source={image} />
+      ))}
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  scrollViewContent: {
+    flexGrow: 1,
   },
 });
 
-export default App;
+// Usage
+const images = [
+  { uri: 'https://fastly.picsum.photos/id/987/200/300.jpg?hmac=JG_lwzlHFo64MDTTkaO_NK_KfCF-FE4ajdvEFqPJ4qY' }
+  // Add more images as needed
+];
+
+export default function App() {
+  return (
+    <View style={{ flex: 1 }}>
+      <ZoomableScrollView images={images} />
+    </View>
+  );
+}

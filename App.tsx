@@ -5,6 +5,7 @@ const App = () => {
   return (
     <View>
       <Text>Git Demo branch </Text>
+      <Text> Hello  Demo Git App</Text>
     </View>
   )
 }
